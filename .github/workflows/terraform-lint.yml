@@ -19,10 +19,12 @@ on:
       os:
          description: "The OS that's used to run action"
          default: ubuntu-latest
+         type: string
          required: false
       tflint_version:
          description: "The version of tflint to use, defaults to `latest`."
          default: latest
+         type: string
          required: false
     secrets:
       gh_token:
