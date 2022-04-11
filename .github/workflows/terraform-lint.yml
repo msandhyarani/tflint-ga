@@ -1,0 +1,58 @@
+name: Reusable workflow for terraform-lint
+
+on:
+  workflow_call:
+    inputs:
+      workflow_id:
+         required: true
+         type: string
+         description: "ID or filename of the workflow to get latest successful commit"
+      files_to_match:
+         description: "Check for changes using only this list of files or regex (Defaults to the entire repo)"
+         required: true
+         type: string
+         default: \.(tf|tfvars)$
+      config_file:
+         description: "Configure custom rules for terraformlint"
+         required: true
+         type: string 
+      os:
+         description: "The OS that's used to run action"
+         default: ubuntu-latest
+         required: false
+      tflint_version:
+         description: "The version of tflint to use, defaults to `latest`."
+         default: latest
+         required: false
+    secrets:
+      gh_token:
+         required:  true
+      gh_repo_read_token:
+         required:  true
+
+jobs:
+   changed_tf_files_job:
+    runs-on: ubuntu-latest
+    outputs:
+      changed_tf_files: ${{ steps.changed-tf-files.outputs.changed_files }}
+      any_tf_changed: ${{ steps.changed-tf-files.outputs.any_changed }}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+          fetch-depth: 0
+
+    - name: Checkout actions repo
+      uses: actions/checkout@v2
+      with:
+        repository: msandhyarani/tflint-ga
+        path: tflint-ga
+        ref: main
+        token: ${{ secrets.gh_repo_read_token }}
+
+    - name: Get changed tf files
+      id: changed-files
+      uses: ./tflint-ga/.github/actions/changed-files-since-last-success
+      with:
+        files_to_match: ${{ inputs.files_to_match }}
+        github_token: ${{ secrets.gh_token }}
+        workflow_id: ${{ inputs.workflow_id }}
